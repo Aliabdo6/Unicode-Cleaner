@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Advanced Unicode Cleaner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          "Segoe UI", Tahoma, Geneva, Verdana,
+          sans-serif;
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease-in;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .glow {
+        box-shadow: 0 0 20px
+          rgba(59, 130, 246, 0.5);
+      }
+      .tab-active {
+        border-bottom: 3px solid #3b82f6;
+        color: #3b82f6;
+      }
+      .stat-card {
+        transition: all 0.3s
+          cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      }
+      textarea {
+        font-family: "Courier New", monospace;
+        resize: vertical;
+      }
+      .char-item {
+        padding: 8px 12px;
+        background: linear-gradient(
+          135deg,
+          #667eea 0%,
+          #764ba2 100%
+        );
+        color: white;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+        margin: 4px;
+      }
+      .char-item.found {
+        background: linear-gradient(
+          135deg,
+          #f093fb 0%,
+          #f5576c 100%
+        );
+      }
+      .analysis-section {
+        border-left: 4px solid #3b82f6;
+        padding: 16px;
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: 8px;
+        margin: 12px 0;
+      }
+      .comparison-view {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .char-preview {
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+        word-break: break-all;
+        border: 1px solid #e2e8f0;
+      }
+      .hidden-highlight {
+        background-color: #fecaca;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #991b1b;
+        font-weight: 700;
+      }
+      .progress-bar {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          #3b82f6,
+          #8b5cf6
+        );
+        transition: width 0.3s ease;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #dbeafe;
+        color: #1e40af;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin: 4px;
+      }
+      .danger {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .success {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .scroll-hidden::-webkit-scrollbar {
+        width: 6px;
+      }
+      .scroll-hidden::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .scroll-hidden::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+      .scroll-hidden::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      .chart-container {
+        position: relative;
+        height: 300px;
+        margin: 20px 0;
+      }
+      .animation-pulse {
+        animation: pulse 2s
+          cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-slate-950 via-purple-900 to-slate-950 min-h-screen"
+  >
+    <div
+      class="min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+    >
+      <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12 fade-in">
+          <div
+            class="flex items-center justify-center gap-3 mb-4"
+          >
+            <i
+              class="fas fa-wand-magic-sparkles text-purple-400 text-4xl"
+            ></i>
+            <h1
+              class="text-5xl sm:text-6xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"
+            >
+              Advanced Unicode Cleaner
+            </h1>
+          </div>
+          <p class="text-slate-300 text-xl mt-2">
+            Deep analysis & cleaning of hidden
+            characters, AI watermarks & invisible
+            marks
+          </p>
+          <p class="text-slate-400 text-sm mt-2">
+            🔒 Privacy-first • No data sent to
+            servers • Process locally in your
+            browser
+          </p>
+        </div>
+
+        <!-- Advanced Stats Dashboard -->
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+        >
+          <div
+            class="stat-card bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white glow"
+          >
+            <div
+              class="flex items-center justify-between mb-4"
+            >
+              <div>
+                <p
+                  class="text-blue-100 text-sm font-medium uppercase tracking-wide"
+                >
+                  Hidden Chars
+                </p>
+                <p
+                  class="text-4xl font-bold"
+                  id="hiddenCount"
+                >
+                  0
+                </p>
+              </div>
+              <i
+                class="fas fa-eye-slash text-5xl opacity-30"
+              ></i>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="stat-card bg-gradient-to-br from-red-600 to-red-700 rounded-xl p-6 text-white glow"
+          >
+            <div
+              class="flex items-center justify-between mb-4"
+            >
+              <div>
+                <p
+                  class="text-red-100 text-sm font-medium uppercase tracking-wide"
+                >
+                  Removed
+                </p>
+                <p
+                  class="text-4xl font-bold"
+                  id="removedCount"
+                >
+                  0
+                </p>
+              </div>
+              <i
+                class="fas fa-trash-can text-5xl opacity-30"
+              ></i>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="stat-card bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-6 text-white glow"
+          >
+            <div
+              class="flex items-center justify-between mb-4"
+            >
+              <div>
+                <p
+                  class="text-green-100 text-sm font-medium uppercase tracking-wide"
+                >
+                  Cleaned
+                </p>
+                <p
+                  class="text-4xl font-bold"
+                  id="cleanedCount"
+                >
+                  0
+                </p>
+              </div>
+              <i
+                class="fas fa-check-circle text-5xl opacity-30"
+              ></i>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="stat-card bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-6 text-white glow"
+          >
+            <div
+              class="flex items-center justify-between mb-4"
+            >
+              <div>
+                <p
+                  class="text-purple-100 text-sm font-medium uppercase tracking-wide"
+                >
+                  Purity
+                </p>
+                <p
+                  class="text-4xl font-bold"
+                  id="cleanRate"
+                >
+                  0%
+                </p>
+              </div>
+              <i
+                class="fas fa-sparkles text-5xl opacity-30"
+              ></i>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div
+          class="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/20"
+        >
+          <!-- Tabs -->
+          <div
+            class="flex border-b border-white/20 bg-white/5 overflow-x-auto sticky top-0 z-10"
+          >
+            <button
+              class="tab-btn px-6 py-4 font-semibold text-slate-300 hover:text-blue-400 transition whitespace-nowrap flex items-center gap-2 tab-active"
+              data-tab="cleaner"
+            >
+              <i
+                class="fas fa-wand-magic-sparkles"
+              ></i
+              >Cleaner
+            </button>
+            <button
+              class="tab-btn px-6 py-4 font-semibold text-slate-300 hover:text-blue-400 transition whitespace-nowrap flex items-center gap-2"
+              data-tab="analysis"
+            >
+              <i class="fas fa-chart-pie"></i
+              >Analysis
+            </button>
+            <button
+              class="tab-btn px-6 py-4 font-semibold text-slate-300 hover:text-blue-400 transition whitespace-nowrap flex items-center gap-2"
+              data-tab="details"
+            >
+              <i class="fas fa-microscope"></i
+              >Details
+            </button>
+            <button
+              class="tab-btn px-6 py-4 font-semibold text-slate-300 hover:text-blue-400 transition whitespace-nowrap flex items-center gap-2"
+              data-tab="guide"
+            >
+              <i class="fas fa-book"></i>Guide
+            </button>
+            <button
+              class="tab-btn px-6 py-4 font-semibold text-slate-300 hover:text-blue-400 transition whitespace-nowrap flex items-center gap-2"
+              data-tab="settings"
+            >
+              <i class="fas fa-sliders"></i
+              >Settings
+            </button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="p-8 text-white">
+            <!-- Cleaner Tab -->
+            <div
+              class="tab-content"
+              id="cleaner-tab"
+            >
+              <div
+                class="grid grid-cols-1 xl:grid-cols-2 gap-8"
+              >
+                <!-- Input Section -->
+                <div class="fade-in">
+                  <div
+                    class="flex items-center justify-between mb-4"
+                  >
+                    <label
+                      class="text-lg font-bold flex items-center gap-2 text-blue-300"
+                    >
+                      <i class="fas fa-paste"></i
+                      >Original Text
+                    </label>
+                    <div class="flex gap-2">
+                      <button
+                        id="pasteBtn"
+                        class="text-xs px-3 py-1 bg-blue-500/30 text-blue-300 rounded-full hover:bg-blue-500/50 transition"
+                      >
+                        <i
+                          class="fas fa-clipboard mr-1"
+                        ></i
+                        >Paste
+                      </button>
+                      <button
+                        id="sampleBtn"
+                        class="text-xs px-3 py-1 bg-purple-500/30 text-purple-300 rounded-full hover:bg-purple-500/50 transition"
+                      >
+                        <i
+                          class="fas fa-flask-vial mr-1"
+                        ></i
+                        >Sample
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    id="inputText"
+                    placeholder="Paste your text here..."
+                    class="w-full h-96 p-4 bg-slate-900/50 border-2 border-blue-500/30 rounded-lg focus:border-blue-500 focus:outline-none text-white placeholder-slate-500 scroll-hidden"
+                  ></textarea>
+                  <div
+                    class="mt-3 flex justify-between text-sm text-slate-400"
+                  >
+                    <span
+                      ><i
+                        class="fas fa-ruler mr-2"
+                      ></i
+                      >Length:
+                      <span id="inputLength"
+                        >0</span
+                      ></span
+                    >
+                    <span
+                      ><i
+                        class="fas fa-lines-leaning mr-2"
+                      ></i
+                      >Lines:
+                      <span id="inputLines"
+                        >0</span
+                      ></span
+                    >
+                    <span
+                      ><i
+                        class="fas fa-words mr-2"
+                      ></i
+                      >Words:
+                      <span id="inputWords"
+                        >0</span
+                      ></span
+                    >
+                  </div>
+                </div>
+
+                <!-- Output Section -->
+                <div class="fade-in">
+                  <div
+                    class="flex items-center justify-between mb-4"
+                  >
+                    <label
+                      class="text-lg font-bold flex items-center gap-2 text-green-300"
+                    >
+                      <i
+                        class="fas fa-check-circle"
+                      ></i
+                      >Cleaned Text
+                    </label>
+                    <div class="flex gap-2">
+                      <button
+                        id="copyBtn"
+                        class="text-xs px-3 py-1 bg-green-500/30 text-green-300 rounded-full hover:bg-green-500/50 transition"
+                      >
+                        <i
+                          class="fas fa-copy mr-1"
+                        ></i
+                        >Copy
+                      </button>
+                      <button
+                        id="downloadBtn"
+                        class="text-xs px-3 py-1 bg-indigo-500/30 text-indigo-300 rounded-full hover:bg-indigo-500/50 transition"
+                      >
+                        <i
+                          class="fas fa-download mr-1"
+                        ></i
+                        >Download
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    id="outputText"
+                    placeholder="Cleaned text will appear here..."
+                    class="w-full h-96 p-4 bg-slate-900/50 border-2 border-green-500/30 rounded-lg focus:border-green-500 focus:outline-none text-white placeholder-slate-500 scroll-hidden"
+                    readonly
+                  ></textarea>
+                  <div
+                    class="mt-3 flex justify-between text-sm text-slate-400"
+                  >
+                    <span
+                      ><i
+                        class="fas fa-ruler mr-2"
+                      ></i
+                      >Length:
+                      <span id="outputLength"
+                        >0</span
+                      ></span
+                    >
+                    <span
+                      ><i
+                        class="fas fa-lines-leaning mr-2"
+                      ></i
+                      >Lines:
+                      <span id="outputLines"
+                        >0</span
+                      ></span
+                    >
+                    <span
+                      ><i
+                        class="fas fa-words mr-2"
+                      ></i
+                      >Words:
+                      <span id="outputWords"
+                        >0</span
+                      ></span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Clean Button -->
+              <div
+                class="mt-8 flex justify-center gap-4"
+              >
+                <button
+                  id="cleanBtn"
+                  class="px-12 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg hover:shadow-2xl hover:shadow-blue-500/50 transition transform hover:scale-105 flex items-center gap-3 text-lg"
+                >
+                  <i class="fas fa-magic"></i
+                  >Clean Text Now
+                </button>
+                <button
+                  id="compareBtn"
+                  class="px-12 py-4 bg-gradient-to-r from-pink-500 to-rose-600 text-white font-bold rounded-lg hover:shadow-2xl hover:shadow-pink-500/50 transition transform hover:scale-105 flex items-center gap-3 text-lg"
+                >
+                  <i
+                    class="fas fa-code-compare"
+                  ></i
+                  >Compare
+                </button>
+              </div>
+
+              <!-- Comparison View -->
+              <div
+                id="comparisonView"
+                class="hidden mt-8"
+              ></div>
+
+              <!-- Removed Characters Display -->
+              <div
+                id="removedDisplay"
+                class="mt-8"
+              ></div>
+            </div>
+
+            <!-- Analysis Tab -->
+            <div
+              class="tab-content hidden"
+              id="analysis-tab"
+            >
+              <div class="space-y-6">
+                <div class="analysis-section">
+                  <h3
+                    class="text-xl font-bold mb-4 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-chart-pie text-blue-400"
+                    ></i
+                    >Character Distribution
+                  </h3>
+                  <div class="chart-container">
+                    <canvas
+                      id="charChart"
+                    ></canvas>
+                  </div>
+                </div>
+
+                <div class="analysis-section">
+                  <h3
+                    class="text-xl font-bold mb-4 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-layer-group text-purple-400"
+                    ></i
+                    >Hidden Character Categories
+                  </h3>
+                  <div
+                    id="categoryStats"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                  ></div>
+                </div>
+
+                <div class="analysis-section">
+                  <h3
+                    class="text-xl font-bold mb-4 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-waveform-lines text-green-400"
+                    ></i
+                    >Text Statistics
+                  </h3>
+                  <div
+                    id="textStats"
+                    class="grid grid-cols-2 md:grid-cols-4 gap-4"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Details Tab -->
+            <div
+              class="tab-content hidden"
+              id="details-tab"
+            >
+              <div class="space-y-6">
+                <div class="analysis-section">
+                  <h3
+                    class="text-xl font-bold mb-4 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-microscope text-blue-400"
+                    ></i
+                    >Character-by-Character
+                    Analysis
+                  </h3>
+                  <div
+                    class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 max-h-96 overflow-y-auto scroll-hidden"
+                  >
+                    <div
+                      id="detailedAnalysis"
+                      class="space-y-2 font-mono text-sm"
+                    ></div>
+                  </div>
+                </div>
+
+                <div class="analysis-section">
+                  <h3
+                    class="text-xl font-bold mb-4 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-list text-purple-400"
+                    ></i
+                    >Found Hidden Characters
+                  </h3>
+                  <div
+                    id="foundCharsList"
+                    class="flex flex-wrap gap-2"
+                  ></div>
+                </div>
+
+                <div class="analysis-section">
+                  <h3
+                    class="text-xl font-bold mb-4 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-json text-pink-400"
+                    ></i
+                    >Unicode Code Points
+                  </h3>
+                  <div
+                    class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 font-mono text-sm max-h-64 overflow-y-auto scroll-hidden"
+                  >
+                    <div id="unicodePoints"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Guide Tab -->
+            <div
+              class="tab-content hidden"
+              id="guide-tab"
+            >
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
+                <div
+                  class="analysis-section border-l-4 border-blue-500"
+                >
+                  <h4
+                    class="font-bold text-blue-300 mb-3 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-eye-slash"
+                    ></i
+                    >Zero-Width Characters
+                  </h4>
+                  <ul
+                    class="text-sm text-slate-300 space-y-2"
+                  >
+                    <li>
+                      <span class="badge"
+                        >U+200B</span
+                      >
+                      ZWSP - Zero-Width Space
+                    </li>
+                    <li>
+                      <span class="badge"
+                        >U+200C</span
+                      >
+                      ZWNJ - Zero-Width Non-Joiner
+                    </li>
+                    <li>
+                      <span class="badge"
+                        >U+200D</span
+                      >
+                      ZWJ - Zero-Width Joiner
+                    </li>
+                    <li>
+                      <span class="badge"
+                        >U+FEFF</span
+                      >
+                      ZWNBSP - Zero-Width No-Break
+                      Space
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  class="analysis-section border-l-4 border-red-500"
+                >
+                  <h4
+                    class="font-bold text-red-300 mb-3 flex items-center gap-2"
+                  >
+                    <i class="fas fa-ban"></i
+                    >Special Spaces
+                  </h4>
+                  <ul
+                    class="text-sm text-slate-300 space-y-2"
+                  >
+                    <li>
+                      <span class="badge danger"
+                        >U+00A0</span
+                      >
+                      NBSP - Non-Breaking Space
+                    </li>
+                    <li>
+                      <span class="badge danger"
+                        >U+202F</span
+                      >
+                      NNBSP - Narrow Non-Breaking
+                      Space
+                    </li>
+                    <li>
+                      <span class="badge danger"
+                        >U+205F</span
+                      >
+                      MMSP - Medium Mathematical
+                      Space
+                    </li>
+                    <li>
+                      <span class="badge danger"
+                        >U+00AD</span
+                      >
+                      SHY - Soft Hyphen
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  class="analysis-section border-l-4 border-yellow-500"
+                >
+                  <h4
+                    class="font-bold text-yellow-300 mb-3 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-arrows-left-right"
+                    ></i
+                    >Direction Controls
+                  </h4>
+                  <ul
+                    class="text-sm text-slate-300 space-y-2"
+                  >
+                    <li>
+                      <span class="badge warning"
+                        >U+200E</span
+                      >
+                      LRM - Left-to-Right Mark
+                    </li>
+                    <li>
+                      <span class="badge warning"
+                        >U+200F</span
+                      >
+                      RLM - Right-to-Left Mark
+                    </li>
+                    <li>
+                      <span class="badge warning"
+                        >U+2060</span
+                      >
+                      WJ - Word Joiner
+                    </li>
+                    <li>
+                      <span class="badge warning"
+                        >U+061C</span
+                      >
+                      ALM - Arabic Letter Mark
+                    </li>
+                  </ul>
+                </div>
+
+                <div
+                  class="analysis-section border-l-4 border-purple-500"
+                >
+                  <h4
+                    class="font-bold text-purple-300 mb-3 flex items-center gap-2"
+                  >
+                    <i class="fas fa-tag"></i
+                    >Hidden Tags
+                  </h4>
+                  <ul
+                    class="text-sm text-slate-300 space-y-2"
+                  >
+                    <li>
+                      <span class="badge success"
+                        >U+E0000-E007F</span
+                      >
+                      Tag Block
+                    </li>
+                    <li>
+                      <span class="badge success"
+                        >U+FE00-FE0F</span
+                      >
+                      Variation Selectors
+                    </li>
+                    <li>
+                      <span class="badge success"
+                        >U+202A-202E</span
+                      >
+                      Format Characters
+                    </li>
+                    <li>
+                      <span class="badge success"
+                        >U+2066-2069</span
+                      >
+                      Isolate Controls
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div
+              class="tab-content hidden"
+              id="settings-tab"
+            >
+              <div class="space-y-6 max-w-3xl">
+                <div
+                  class="bg-slate-900/30 border border-slate-700 p-6 rounded-lg"
+                >
+                  <h3
+                    class="font-bold text-lg mb-6 flex items-center gap-2"
+                  >
+                    <i
+                      class="fas fa-sliders text-blue-400"
+                    ></i
+                    >Cleaning Options
+                  </h3>
+                  <div class="space-y-3">
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="removeZeroWidth"
+                        checked
+                        class="w-5 h-5 text-blue-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-blue-300"
+                        >
+                          Zero-Width Characters
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          ZWSP, ZWNJ, ZWJ, ZWNBSP
+                        </p>
+                      </span>
+                    </label>
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="removeSpaces"
+                        checked
+                        class="w-5 h-5 text-red-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-red-300"
+                        >
+                          Special Spaces
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          NBSP, NNBSP, MMSP
+                          (replaced with normal
+                          space)
+                        </p>
+                      </span>
+                    </label>
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="removeDirection"
+                        checked
+                        class="w-5 h-5 text-yellow-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-yellow-300"
+                        >
+                          Direction Controls
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          LRM, RLM, WJ, ALM
+                        </p>
+                      </span>
+                    </label>
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="removeFormat"
+                        checked
+                        class="w-5 h-5 text-purple-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-purple-300"
+                        >
+                          Format Characters
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          Embedding, Override,
+                          Isolate controls
+                        </p>
+                      </span>
+                    </label>
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="removeTags"
+                        checked
+                        class="w-5 h-5 text-green-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-green-300"
+                        >
+                          Hidden Tags & Variation
+                          Selectors
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          Tag blocks and
+                          appearance modifiers
+                        </p>
+                      </span>
+                    </label>
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="removeControl"
+                        checked
+                        class="w-5 h-5 text-pink-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-pink-300"
+                        >
+                          Control Characters
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          BOM, soft hyphens, and
+                          system controls
+                        </p>
+                      </span>
+                    </label>
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="trimWhitespace"
+                        checked
+                        class="w-5 h-5 text-indigo-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-indigo-300"
+                        >
+                          Trim Whitespace
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          Remove leading/trailing
+                          spaces
+                        </p>
+                      </span>
+                    </label>
+                    <label
+                      class="flex items-center gap-4 cursor-pointer p-3 hover:bg-slate-800/50 rounded transition"
+                    >
+                      <input
+                        type="checkbox"
+                        id="normalizeNewlines"
+                        checked
+                        class="w-5 h-5 text-cyan-600 rounded"
+                      />
+                      <span>
+                        <p
+                          class="font-semibold text-cyan-300"
+                        >
+                          Normalize Newlines
+                        </p>
+                        <p
+                          class="text-xs text-slate-400"
+                        >
+                          Convert CRLF and CR to
+                          LF
+                        </p>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div
+          class="text-center mt-12 text-slate-400"
+        >
+          <p class="text-sm">
+            <i
+              class="fas fa-lock text-green-500 mr-2"
+            ></i
+            >100% Private • No data sent to
+            servers • All processing is local
+          </p>
+          <p class="text-xs mt-3">
+            Advanced Unicode Cleaner v2.0 | Made
+            with
+            <i
+              class="fas fa-heart text-red-500"
+            ></i>
+            for developers
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
