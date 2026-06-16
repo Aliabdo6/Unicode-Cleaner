@@ -180,15 +180,6 @@ const settings = {
 
 let charChart = null;
 
-// Sample text for demo
-const SAMPLE_TEXT = `يا سارة 🤍
-
-عارفة إن من الحاجات الغريبة في الحياة إن الإنسان ممكن يقابل ناس كثير جدًا لكن قليل أوي اللي يسيبوا أثر حقيقي في قلبه
-
-وأعتقد إنك واحدة من الناس دي بالنسبة لي
-
-أحب فيكي إن قلبك طيب وحنون وإن عندك مشاعر صادقة حتى لو أوقات بتظهريها بطريقة مختلفة شوية 😄`;
-
 // Tab switching
 elements.tabBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -634,20 +625,6 @@ elements.pasteBtn.addEventListener(
       .catch(() =>
         alert("Failed to read from clipboard"),
       );
-  },
-);
-
-// Sample text
-elements.sampleBtn.addEventListener(
-  "click",
-  () => {
-    elements.input.value = SAMPLE_TEXT;
-    stats.inputLength.textContent =
-      SAMPLE_TEXT.length.toLocaleString();
-    elements.removedDisplay.innerHTML = "";
-    elements.comparisonView.classList.add(
-      "hidden",
-    );
   },
 );
 
